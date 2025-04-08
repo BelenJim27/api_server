@@ -23,11 +23,12 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({ message: 'Usuario registrado con éxito.' });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error en el servidor.' });
   }
 });
 
-// Ruta para iniciar sesión y obtener token
+// Ruta para iniciar sesión
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -38,7 +39,6 @@ router.post('/login', async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(400).json({ message: 'Contraseña incorrecta.' });
 
-    // Generar token JWT
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.status(200).json({ message: 'Inicio de sesión exitoso.', token });
@@ -47,8 +47,8 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Ruta protegida para obtener todos los usuarios (requiere token)
-router.get('/users', authMiddleware, async (req, res) => {
+// Obtener todos los usuarios
+router.get('/users', async (req, res) => {
   try {
     const users = await User.find().select('-password');
     res.status(200).json(users);
@@ -57,10 +57,13 @@ router.get('/users', authMiddleware, async (req, res) => {
   }
 });
 
-// Ruta protegida para obtener un usuario por ID
+// Obtener usuario por ID numérico
 router.get('/users/:id', authMiddleware, async (req, res) => {
+  const userId = parseInt(req.params.id);
+  if (isNaN(userId)) return res.status(400).json({ message: 'ID inválido.' });
+
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findOne({ id: userId }).select('-password');
     if (!user) return res.status(404).json({ message: 'Usuario no encontrado.' });
 
     res.status(200).json(user);
@@ -69,15 +72,45 @@ router.get('/users/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Ruta protegida para eliminar un usuario
-router.delete('/users/:id', authMiddleware, async (req, res) => {
+// Actualizar usuario por ID numérico
+router.put('/users/:id', authMiddleware, async (req, res) => {
+  const userId = parseInt(req.params.id);
+  if (isNaN(userId)) return res.status(400).json({ message: 'ID inválido.' });
+
+  const { name, email, password } = req.body;
+
   try {
-    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (password) updateData.password = await bcrypt.hash(password, 10);
+
+    const updatedUser = await User.findOneAndUpdate(
+      { id: userId },
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedUser) return res.status(404).json({ message: 'Usuario no encontrado.' });
+
+    res.status(200).json({ message: 'Usuario actualizado correctamente.', updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar el usuario.' });
+  }
+});
+
+// Eliminar usuario por ID numérico
+router.delete('/users/:id', authMiddleware, async (req, res) => {
+  const userId = parseInt(req.params.id);
+  if (isNaN(userId)) return res.status(400).json({ message: 'ID inválido.' });
+
+  try {
+    const deletedUser = await User.findOneAndDelete({ id: userId });
     if (!deletedUser) return res.status(404).json({ message: 'Usuario no encontrado.' });
 
     res.status(200).json({ message: 'Usuario eliminado correctamente.' });
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor.' });
+    res.status(500).json({ message: 'Error al eliminar el usuario.' });
   }
 });
 
