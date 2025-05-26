@@ -8,7 +8,7 @@ const productoSchema = new mongoose.Schema({
   existencia: Number,
   material: String,
   color: String,
-  url: [String],
+  imagenes: [String], 
   valoracion: {
     promedio: Number,
     comentarios: [

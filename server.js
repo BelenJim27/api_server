@@ -4,6 +4,10 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartroutes');
+const path = require('path');
+
+
 
 const app = express();
 
@@ -20,9 +24,14 @@ app.use(cors());
 app.use(express.json());
 app.use('/api', userRoutes);
 app.use('/api', productRoutes); 
-
-
+app.use('/api', cartRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png')) {
+      res.set('Content-Type', 'image/jpeg');
+    }
+  }
+}));
 app.listen(port, () => {
-  console.log(`Servidor corriendo en http://192.168.1.56:${port}`);
+  console.log(`Servidor corriendo en http://192.168.1.77:${port}`);
 });
-app.use('/api', productRoutes); 

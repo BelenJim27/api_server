@@ -1,22 +1,33 @@
-const jwt = require('jsonwebtoken'); //Importa la librería jsonwebtoken que se usa para trabajar con JWT.
+const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
 
-//Define la función middleware que toma los objetos req, res y next.
-const authMiddleware = (req, res, next) => {
-  const token = req.header('Authorization');//Intenta obtener el token del header 'Authorization' de la solicitud.
+const authMiddleware = async (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
 
   if (!token) {
     return res.status(401).json({ message: 'Acceso denegado. No hay token.' });
-  }//Si no hay token, responde con un error 401 (No autorizado).
+  }
 
-
-//intenta verificar el token
   try {
-    const decoded = jwt.verify(token.replace('Bearer ', ''), process.env.JWT_SECRET);//Usa una clave secreta almacenada en variables de entorno
-    req.user = decoded;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId).select('-password');
+
+    if (!user) {
+      return res.status(401).json({ message: 'Usuario no encontrado.' });
+    }
+
+    req.user = user; // Adjunta el usuario completo (sin password)
     next();
   } catch (error) {
     res.status(401).json({ message: 'Token inválido o expirado.' });
   }
 };
 
-module.exports = authMiddleware;
+const adminOnly = (req, res, next) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ message: 'Acceso denegado. Solo administradores.' });
+  }
+  next();
+};
+
+module.exports = { authMiddleware, adminOnly };
