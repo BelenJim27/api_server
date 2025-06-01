@@ -80,7 +80,9 @@ router.get('/productos', async (req, res) => {
 router.get('/productos/categoria/:categoria', async (req, res) => {
   try {
     const categoria = req.params.categoria;
-    const productos = await Producto.find({ categoria });
+    const productos = await Producto.find({
+      categoria: { $regex: new RegExp(`^${categoria}$`, 'i') } // Insensible a mayúsculas
+    });
     res.status(200).json({ success: true, data: productos });
   } catch (error) {
     res.status(500).json({
@@ -90,6 +92,7 @@ router.get('/productos/categoria/:categoria', async (req, res) => {
     });
   }
 });
+
 
 // Obtener un producto por ID
 router.get('/productos/:id', async (req, res) => {
