@@ -33,5 +33,5 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   }
 }));
 app.listen(port, () => {
-  console.log(`Servidor corriendo en http://192.168.1.77:${port}`);
+  console.log(`Servidor corriendo en http://192.168.80.109:${port}`);
 });
