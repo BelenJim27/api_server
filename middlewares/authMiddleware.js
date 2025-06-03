@@ -3,6 +3,8 @@ const User = require('../models/userModel');
 
 const authMiddleware = async (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
+  console.log('Token recibido:', token); // 👈 Debug aquí
+  console.log('Headers recibidos:', req.headers); // 👈 Verifica todos los headers
 
   if (!token) {
     return res.status(401).json({ message: 'Acceso denegado. No hay token.' });
