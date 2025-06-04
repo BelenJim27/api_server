@@ -6,6 +6,8 @@ const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartroutes');
 const path = require('path');
+const paymentIntent=require('./routes/PaymentIntent')
+const { countReset } = require('console');
 
 
 
@@ -25,6 +27,8 @@ app.use(express.json());
 app.use('/api', userRoutes);
 app.use('/api', productRoutes); 
 app.use('/api', cartRoutes);
+app.use('/api', paymentIntent);
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: (res, path) => {
     if (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png')) {
