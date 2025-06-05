@@ -13,7 +13,7 @@ const { countReset } = require('console');
 
 const app = express();
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8080;
 
 // Conectar a MongoDB
 mongoose.connect(process.env.MONGO_URI, {
