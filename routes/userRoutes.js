@@ -15,18 +15,27 @@ router.post('/register', async (req, res) => {
 
   // Validación mejorada
   if (!name || !name.trim()) {
-    return res.status(400).json({ success: false, message: 'Nombre es requerido.' });
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Nombre es requerido.',
+      errors: { name: 'Debe proporcionar un nombre válido' }
+    });
   }
   
   if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-    return res.status(400).json({ success: false, message: 'Email inválido.' });
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Email inválido.',
+      errors: { email: 'Debe proporcionar un email válido' }
+    });
   }
 
   if (!password || password.length < 6) {
     return res.status(400).json({ 
-      success: false, 
-      message: 'La contraseña debe tener al menos 6 caracteres.' 
-    });
+      success: false,
+      message: 'La contraseña debe tener al menos 6 caracteres.',
+      errors: { password: 'Mínimo 6 caracteres' }
+    }); 
   }
 
   try {
@@ -34,7 +43,8 @@ router.post('/register', async (req, res) => {
     if (existingUser) {
       return res.status(409).json({ 
         success: false,
-        message: 'El email ya está registrado.' 
+        message: 'El email ya está registrado.',
+        errors: { email: 'Este email ya está en uso' }
       });
     }
 
@@ -42,32 +52,39 @@ router.post('/register', async (req, res) => {
       name: name.trim(),
       email: email.toLowerCase(),
       password,
-      role: 'client' // Rol por defecto
+      role: 'client'
     });
 
     await newUser.save();
 
     // Generar tokens
     const tokens = generateTokens(newUser);
+    const userData = getUserResponse(newUser);
 
     res.status(201).json({
       success: true,
-      message: 'Usuario registrado con éxito.',
+      message: 'Usuario registrado con éxito',
       data: {
-        token: tokens.accessToken,
+        token: tokens.accessToken,  // O simplemente tokens.token si cambiaste el nombre
         refreshToken: tokens.refreshToken,
-        user: getUserResponse(newUser)
+        user: {
+          id: userData._id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role
+          // Agrega otros campos necesarios
+        }
       }
     });
   } catch (error) {
     console.error('Error en registro:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Error en el servidor.' 
+      message: 'Error en el servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
-
 // Iniciar sesión
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;

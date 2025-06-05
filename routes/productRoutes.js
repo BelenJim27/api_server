@@ -54,20 +54,24 @@ router.post('/productos/:id/imagenes',
   }
 );
 // Obtener productos
+// Obtener productos con búsqueda opcional
 router.get('/productos', async (req, res) => {
   try {
-    
-    
-    const productos = await Producto.find(); // Ordenar por fecha de creación descendente
-    
+    const search = req.query.search || '';
+    const regex = new RegExp(search, 'i'); // 'i' para insensible a mayúsculas/minúsculas
+
+    const productos = await Producto.find({
+      $or: [
+        { nombre: { $regex: regex } },
+        { descripcion: { $regex: regex } }
+      ]
+    });
+
     res.status(200).json({
       success: true,
       data: productos,
-      
-      
     });
   } catch (error) {
-    // manejo de error
     console.error('Error en GET /productos:', error);
     res.status(500).json({ 
       success: false, 
