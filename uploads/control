@@ -1,0 +1,12 @@
+Package: mongodb-mongosh
+Provides: mongodb-shell (= 2.0)
+Version: 2.5.2
+Section: utils
+Priority: optional
+Architecture: amd64
+Installed-Size: 264224
+Maintainer: Compass Team <compass@mongodb.com>
+Homepage: https://github.com/mongodb-js/mongosh
+Description: MongoDB Shell CLI REPL Package
+Depends: libc6 (>= 2.17)
+Recommends: libgssapi-krb5-2
