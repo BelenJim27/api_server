@@ -2,18 +2,24 @@ const express = require('express');
 const router = express.Router(); // 👈 ESTA LÍNEA FALTABA
 const Producto = require('../models/productModel');
 const { authMiddleware, adminOnly } = require('../middlewares/authMiddleware'); // ✅
-const upload = require('../config/multer');
+const { upload, generateUniqueNames } = require('../config/fileUpload');
 
 // Crear un producto
-
 router.post('/productos', 
   authMiddleware,
   adminOnly,
-  upload.array('imagenes'), // 'imagenes' debe coincidir con el key en Postman
+  upload, // Middleware express-fileupload
+  generateUniqueNames, // Asegura nombres únicos y guarda en disco
   async (req, res) => {
     try {
-      const { nombre,descripcion, precio, existencia, categoria } = req.body;
-      const imagenes = req.files.map(file => file.path); // Paths de las imágenes subidas
+      const { nombre, descripcion, precio, existencia, categoria } = req.body;
+
+      const imagenes = [];
+      const keys = Object.keys(req.files || {});
+      keys.forEach(key => {
+        const files = Array.isArray(req.files[key]) ? req.files[key] : [req.files[key]];
+        files.forEach(file => imagenes.push(file.path));
+      });
 
       const nuevoProducto = new Producto({
         nombre,
@@ -35,30 +41,32 @@ router.post('/productos',
 router.post('/productos/:id/imagenes', 
   authMiddleware,
   adminOnly,
-  upload, // Middleware de express-fileupload
+  upload,
+  generateUniqueNames,
   async (req, res) => {
     try {
       const producto = await Producto.findById(req.params.id);
       if (!producto) {
-        return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+        return res.status(404).json({ message: 'Producto no encontrado' });
       }
 
-      // Obtener rutas de las imágenes (req.files es un objeto, no un array)
-      const nuevasImagenes = Object.values(req.files).map(file => {
-        const filePath = `uploads/${file.name}`;
-        file.mv(filePath); // Mueve el archivo a la carpeta "uploads"
-        return filePath;
+      const nuevasImagenes = [];
+      const keys = Object.keys(req.files || {});
+      keys.forEach(key => {
+        const files = Array.isArray(req.files[key]) ? req.files[key] : [req.files[key]];
+        files.forEach(file => nuevasImagenes.push(file.path));
       });
 
       producto.imagenes = [...producto.imagenes, ...nuevasImagenes];
       await producto.save();
 
-      res.status(200).json({ success: true, imagenes: producto.imagenes });
+      res.json({ imagenes: producto.imagenes });
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(500).json({ message: error.message });
     }
   }
 );
+
 // Obtener productos
 // Obtener productos con búsqueda opcional
 router.get('/productos', async (req, res) => {
@@ -188,33 +196,7 @@ router.put('/productos/:id/remove-image',
     }
   }
 );
-/** 
-router.put('/productos/:id/remove-image', 
-  authMiddleware,
-  adminOnly,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { imageUrl } = req.body;
 
-      const productoActualizado = await Producto.findByIdAndUpdate(
-        id,
-        { $pull: { imagenes: imageUrl } },
-        { new: true }
-      );
-
-      res.status(200).json({ 
-        success: true, 
-        producto: productoActualizado 
-      });
-    } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error al eliminar la imagen.' 
-      });
-    }
-  }
-);*/
  //para decreementar las existencias de un producto
 // Ruta para decrementar existencias de un producto
 
