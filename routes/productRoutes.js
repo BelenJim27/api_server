@@ -35,7 +35,7 @@ router.post('/productos',
 router.post('/productos/:id/imagenes', 
   authMiddleware,
   adminOnly,
-  upload.array('imagenes'),
+  upload, // Middleware de express-fileupload
   async (req, res) => {
     try {
       const producto = await Producto.findById(req.params.id);
@@ -43,7 +43,13 @@ router.post('/productos/:id/imagenes',
         return res.status(404).json({ success: false, message: 'Producto no encontrado' });
       }
 
-      const nuevasImagenes = req.files.map(file => file.path);
+      // Obtener rutas de las imágenes (req.files es un objeto, no un array)
+      const nuevasImagenes = Object.values(req.files).map(file => {
+        const filePath = `uploads/${file.name}`;
+        file.mv(filePath); // Mueve el archivo a la carpeta "uploads"
+        return filePath;
+      });
+
       producto.imagenes = [...producto.imagenes, ...nuevasImagenes];
       await producto.save();
 
