@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "build": "npm install"
+    "build": "npm install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+
   },
   "engines": {
-    "node": ">=20.0.0",
-    "npm": "9.x"
+    "node": "22.16.0",
+    "npm": "10.9.2"
   },
   "keywords": [],
   "author": "",
